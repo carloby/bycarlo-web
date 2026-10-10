@@ -52,7 +52,7 @@ Los precios están en tres sitios y tienen que coincidir:
 
 ## Pendiente antes de lanzar
 
-- [ ] Sustituir todo lo que está entre corchetes: imágenes y resultado de los casos, bio y precio de la auditoría
+- [ ] Sustituir todo lo que está entre corchetes: imágenes y resultado de los casos
 - [ ] Permiso de los clientes para aparecer como caso
 - [ ] Correo real de contacto (`EMAIL` en `public/app.js`; ahora `carloby@gmail.com`)
 - [ ] Enlaces reales de Instagram, LinkedIn y la tienda (o ocultar la sección de plantillas mientras esté vacía)

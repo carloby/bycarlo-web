@@ -28,6 +28,11 @@
       desc: "Blog, newsletter, piezas para redes y la web siempre actualizada.",
       price: "desde 450 €/mes", cta: "Ver paquete", href: "#paquetes",
     },
+    auditoria: {
+      kind: "Servicio", name: "Auditoría exprés", short: "Diez mejoras en vídeo",
+      desc: "Carlo revisa tu web a fondo y te manda un vídeo con diez mejoras concretas.",
+      price: "150 €", cta: "La quiero", href: "#contacto",
+    },
     auto: {
       kind: "Servicio", name: "Automatización a medida", short: "Un flujo funcionando",
       desc: "Un flujo en Make funcionando y documentado para que lo entiendas.",
