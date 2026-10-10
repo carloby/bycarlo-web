@@ -6,8 +6,10 @@ import type { Config, Context } from "@netlify/functions";
 import { SYSTEM_PROMPT } from "./instrucciones.mts";
 import { findUrl, inspectWeb } from "./web.mts";
 
-const DEFAULT_MODEL = "gemini-3.8-flash";
+// Se prueban en orden: si el primero está saturado o sin cupo, se pasa al siguiente.
+const MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+const TRY_TIMEOUT_MS = 15000; // espera máxima por intento
 const MAX_MESSAGES = 16; // mensajes de historial que se aceptan
 const MAX_CHARS = 800; // caracteres por mensaje
 const MAX_USER_TURNS = 8; // mensajes del visitante por conversación
@@ -16,6 +18,7 @@ const CARD_KEYS = ["web", "marca", "mensual", "auto"];
 const CARD_TAG = /\[\[\s*paquete\s*:\s*([a-z]+)\s*\]\]/gi;
 
 type Msg = { role: "user" | "assistant"; content: string };
+type Attempt = { modelo: string; estado: number; detalle: string; texto: string };
 
 function sanitize(raw: unknown): Msg[] | null {
   if (!Array.isArray(raw) || raw.length === 0 || raw.length > MAX_MESSAGES) return null;
@@ -35,83 +38,79 @@ function sanitize(raw: unknown): Msg[] | null {
   return out;
 }
 
+function modelList(): string[] {
+  const preferred = Netlify.env.get("AICARLO_MODEL");
+  return Array.from(new Set([preferred, ...MODELS].filter(Boolean) as string[]));
+}
+
 function systemText(): string {
   const hoy = new Intl.DateTimeFormat("es-ES", { dateStyle: "full", timeZone: "Europe/Madrid" }).format(new Date());
   return `${SYSTEM_PROMPT}\n\n# Hoy\nHoy es ${hoy}.`;
 }
 
-async function askGemini(apiKey: string, model: string, messages: Msg[]): Promise<string> {
-  const res = await fetch(`${API_BASE}/${encodeURIComponent(model)}:generateContent`, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemText() }] },
-      contents: messages.map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      })),
-      generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.7 },
-    }),
-    signal: AbortSignal.timeout(25000),
-  });
-
-  if (!res.ok) {
-    const detail = (await res.text()).slice(0, 300);
-    throw new Error(`Gemini respondió ${res.status}: ${detail}`);
+/** Una llamada a un modelo concreto. No lanza errores: devuelve qué pasó. */
+async function callModel(apiKey: string, model: string, payload: unknown): Promise<Attempt> {
+  try {
+    const res = await fetch(`${API_BASE}/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(TRY_TIMEOUT_MS),
+    });
+    const raw = await res.text();
+    let data: {
+      error?: { status?: string; message?: string };
+      candidates?: { finishReason?: string; content?: { parts?: { text?: string; thought?: boolean }[] } }[];
+    } = {};
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return { modelo: model, estado: res.status, detalle: raw.slice(0, 200), texto: "" };
+    }
+    if (!res.ok || data.error) {
+      const detalle = `${data.error?.status ?? ""}: ${String(data.error?.message ?? "").slice(0, 200)}`;
+      return { modelo: model, estado: res.status, detalle, texto: "" };
+    }
+    const candidate = data.candidates?.[0];
+    const texto = (candidate?.content?.parts ?? [])
+      .filter((p) => !p.thought)
+      .map((p) => p.text ?? "")
+      .join("")
+      .trim();
+    return { modelo: model, estado: res.status, detalle: candidate?.finishReason ?? "", texto };
+  } catch (err) {
+    return { modelo: model, estado: 0, detalle: String(err).slice(0, 200), texto: "" };
   }
+}
 
-  const data = (await res.json()) as {
-    candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[];
-  };
-  const parts = data.candidates?.[0]?.content?.parts ?? [];
-  return parts
-    .filter((p) => !p.thought)
-    .map((p) => p.text ?? "")
-    .join("")
-    .trim();
+/** Prueba los modelos en orden hasta que uno conteste con texto. */
+async function ask(apiKey: string, payload: unknown): Promise<{ texto: string; intentos: Attempt[] }> {
+  const intentos: Attempt[] = [];
+  for (const model of modelList()) {
+    const attempt = await callModel(apiKey, model, payload);
+    intentos.push(attempt);
+    if (attempt.texto) return { texto: attempt.texto, intentos };
+    // Una clave mala o una petición mal formada fallarán igual en todos: no se insiste.
+    if (attempt.estado === 400 || attempt.estado === 401 || attempt.estado === 403) break;
+  }
+  return { texto: "", intentos };
 }
 
 export default async (req: Request, _context: Context) => {
   const apiKey = Netlify.env.get("GEMINI_API_KEY");
-  const model = Netlify.env.get("AICARLO_MODEL") || DEFAULT_MODEL;
 
-  // Comprobación rápida: abrir /api/chat en el navegador dice si el modelo está
-  // configurado, sin enseñar ninguna clave.
   if (req.method === "GET") {
-    // /api/chat?diagnostico=1 hace una llamada mínima al modelo y dice qué responde Google.
+    const headers = { "cache-control": "no-store" };
+    // /api/chat?diagnostico=1 hace una llamada mínima y dice qué responde cada modelo.
     if (apiKey && new URL(req.url).searchParams.has("diagnostico")) {
-      try {
-        const res = await fetch(`${API_BASE}/${encodeURIComponent(model)}:generateContent`, {
-          method: "POST",
-          headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: "Di hola en dos palabras." }] }],
-            generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
-          }),
-          signal: AbortSignal.timeout(25000),
-        });
-        const raw = await res.text();
-        let detalle = raw.slice(0, 400);
-        let fin = "";
-        let texto = "";
-        try {
-          const j = JSON.parse(raw);
-          if (j.error) detalle = `${j.error.status || ""}: ${String(j.error.message || "").slice(0, 300)}`;
-          else {
-            fin = j.candidates?.[0]?.finishReason || "";
-            texto = (j.candidates?.[0]?.content?.parts || []).filter((p: { thought?: boolean }) => !p.thought).map((p: { text?: string }) => p.text || "").join("").slice(0, 80);
-            detalle = JSON.stringify(j.usageMetadata || {}).slice(0, 300);
-          }
-        } catch {}
-        return Response.json({ modelo: model, estado: res.status, fin, texto, detalle }, { headers: { "cache-control": "no-store" } });
-      } catch (err) {
-        return Response.json({ modelo: model, estado: 0, detalle: String(err).slice(0, 300) }, { headers: { "cache-control": "no-store" } });
-      }
+      const { intentos } = await ask(apiKey, {
+        contents: [{ role: "user", parts: [{ text: "Di hola en dos palabras." }] }],
+        generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
+      });
+      return Response.json({ intentos: intentos.map((i) => ({ ...i, texto: i.texto.slice(0, 60) })) }, { headers });
     }
-    return Response.json(
-      { ok: true, configurado: Boolean(apiKey), proveedor: "gemini", modelo: model },
-      { headers: { "cache-control": "no-store" } },
-    );
+    // /api/chat a secas dice si hay clave configurada, sin enseñarla.
+    return Response.json({ ok: true, configurado: Boolean(apiKey), proveedor: "gemini", modelos: modelList() }, { headers });
   }
 
   let body: { messages?: unknown };
@@ -143,22 +142,29 @@ export default async (req: Request, _context: Context) => {
     last.content += `\n\n[DATOS DE LA WEB DEL VISITANTE]\n${ficha}\n[FIN DE LOS DATOS]`;
   }
 
-  try {
-    const raw = await askGemini(apiKey, model, messages);
+  const { texto, intentos } = await ask(apiKey, {
+    systemInstruction: { parts: [{ text: systemText() }] },
+    contents: messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    })),
+    generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.7 },
+  });
 
-    const cards: string[] = [];
-    for (const match of raw.matchAll(CARD_TAG)) {
-      const key = match[1].toLowerCase();
-      if (CARD_KEYS.includes(key) && !cards.includes(key)) cards.push(key);
-    }
-    const reply = raw.replace(CARD_TAG, "").replace(/\n{3,}/g, "\n\n").trim();
-
-    if (!reply) return Response.json({ error: "empty" }, { status: 502 });
-    return Response.json({ reply, cards: cards.slice(0, 1) });
-  } catch (err) {
-    console.error("AiCarlo: fallo al llamar al modelo", err);
+  if (!texto) {
+    console.error("AiCarlo: ningún modelo contestó", JSON.stringify(intentos));
     return Response.json({ error: "upstream" }, { status: 502 });
   }
+
+  const cards: string[] = [];
+  for (const match of texto.matchAll(CARD_TAG)) {
+    const key = match[1].toLowerCase();
+    if (CARD_KEYS.includes(key) && !cards.includes(key)) cards.push(key);
+  }
+  const reply = texto.replace(CARD_TAG, "").replace(/\n{3,}/g, "\n\n").trim();
+
+  if (!reply) return Response.json({ error: "empty" }, { status: 502 });
+  return Response.json({ reply, cards: cards.slice(0, 1) });
 };
 
 export const config: Config = {

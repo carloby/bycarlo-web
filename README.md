@@ -38,7 +38,9 @@ Sin clave, el chat sigue funcionando con las sugerencias y, al escribir texto li
 
 Abrir `/api/chat` en el navegador dice si la clave está activa (`"configurado": true`) sin enseñarla.
 
-Variable opcional: `AICARLO_MODEL` para cambiar de modelo (por defecto `gemini-3.8-flash`).
+Los modelos se prueban en orden (`MODELS` en `index.mts`): si el primero está saturado, contesta el siguiente. `AICARLO_MODEL` permite poner otro delante.
+
+Abrir `/api/chat?diagnostico=1` hace una llamada mínima y enseña qué responde cada modelo.
 
 ## Si cambias un precio
 
