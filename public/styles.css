@@ -123,7 +123,7 @@ h1 { font-weight: 700; font-size: clamp(40px, 6.2vw, 88px); line-height: 1.03; l
 .mini:hover { border-color: var(--line-strong); }
 .mini-name { font-size: 18px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
 .mini-desc { font-size: 14px; color: var(--text-3); }
-.mini-price { font-weight: 600; padding-top: 6px; }
+.mini-price { margin-top: auto; font-weight: 600; padding-top: 6px; }
 
 .cta { display: flex; flex-direction: column; gap: 12px; padding-bottom: 14px; }
 .cta .btn { align-self: flex-start; padding: 10px 18px; font-size: 15px; }
@@ -183,6 +183,8 @@ h2 { font-weight: 700; font-size: clamp(32px, 3.6vw, 52px); line-height: 1.06; l
 .pack-featured { background: var(--text); color: var(--ink); }
 .pack-featured .muted { color: #515154; }
 .tag { align-self: flex-start; padding: 4px 12px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 600; }
+
+.extras { display: flex; flex-direction: column; gap: 8px; }
 
 .band-wrap { padding-top: 24px; padding-bottom: 24px; }
 .band { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: 48px; border-radius: var(--radius); background: var(--accent); color: var(--on-accent); }

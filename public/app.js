@@ -18,6 +18,11 @@
       desc: "Landing en Framer con textos, formulario y analítica. Entregada en una semana.",
       price: "desde 900 €", cta: "Ver paquete", href: "#paquetes",
     },
+    tienda: {
+      kind: "Paquete", name: "Tienda online", short: "Catálogo, pagos y envíos",
+      desc: "Tienda en Shopify o WooCommerce con catálogo, pagos, envíos y textos de producto.",
+      price: "desde 2.500 €", cta: "Cuéntame qué vendes", href: "#contacto",
+    },
     marca: {
       kind: "Paquete", name: "Marca + Web", short: "Identidad y web completa",
       desc: "Logo, paleta, tipografías, guía de marca y la web completa.",
@@ -69,8 +74,8 @@
     },
     precio: {
       q: "¿Cuánto cuesta?",
-      a: "Al grano, que me gusta. Hay tres formas de trabajar conmigo. Si no sabes cuál es la tuya, dime a qué te dedicas y te lo digo yo.",
-      cards: ["web", "marca", "mensual"], offer: false,
+      a: "Al grano, que me gusta. Estas son las formas de trabajar conmigo. Si no sabes cuál es la tuya, dime a qué te dedicas y te lo digo yo.",
+      cards: ["web", "tienda", "marca", "mensual"], offer: false,
     },
   };
 

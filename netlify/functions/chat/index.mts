@@ -14,7 +14,7 @@ const MAX_MESSAGES = 24; // mensajes de historial que se aceptan
 const MAX_CHARS = 800; // caracteres por mensaje
 const MAX_USER_TURNS = 12; // mensajes del visitante por conversación
 const MAX_OUTPUT_TOKENS = 1200; // techo de cada respuesta (la brevedad la piden las instrucciones)
-const CARD_KEYS = ["web", "marca", "mensual", "auto", "auditoria"];
+const CARD_KEYS = ["web", "tienda", "marca", "mensual", "auto", "auditoria"];
 const CARD_TAG = /\[\[\s*paquete\s*:\s*([a-z]+)\s*\]\]/gi;
 
 type Msg = { role: "user" | "assistant"; content: string };
