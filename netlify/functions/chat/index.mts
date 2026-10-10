@@ -1,16 +1,16 @@
 // Función del chat de AiCarlo. Se sirve en /api/chat.
-// La clave del modelo la pone Netlify AI Gateway (o una variable ANTHROPIC_API_KEY propia):
-// nunca viaja al navegador.
+// Habla con Gemini usando la clave guardada en Netlify como GEMINI_API_KEY:
+// la clave nunca viaja al navegador.
 
 import type { Config, Context } from "@netlify/functions";
-import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "./instrucciones.mts";
 
-const DEFAULT_MODEL = "claude-haiku-4-5";
+const DEFAULT_MODEL = "gemini-3.8-flash";
+const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const MAX_MESSAGES = 16; // mensajes de historial que se aceptan
 const MAX_CHARS = 800; // caracteres por mensaje
 const MAX_USER_TURNS = 8; // mensajes del visitante por conversación
-const MAX_TOKENS = 400; // longitud máxima de cada respuesta
+const MAX_OUTPUT_TOKENS = 1200; // techo de cada respuesta (la brevedad la piden las instrucciones)
 const CARD_KEYS = ["web", "marca", "mensual", "auto"];
 const CARD_TAG = /\[\[\s*paquete\s*:\s*([a-z]+)\s*\]\]/gi;
 
@@ -34,17 +34,46 @@ function sanitize(raw: unknown): Msg[] | null {
   return out;
 }
 
+async function askGemini(apiKey: string, model: string, messages: Msg[]): Promise<string> {
+  const res = await fetch(`${API_BASE}/${encodeURIComponent(model)}:generateContent`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: messages.map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      })),
+      generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.7 },
+    }),
+    signal: AbortSignal.timeout(25000),
+  });
+
+  if (!res.ok) {
+    const detail = (await res.text()).slice(0, 300);
+    throw new Error(`Gemini respondió ${res.status}: ${detail}`);
+  }
+
+  const data = (await res.json()) as {
+    candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[];
+  };
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  return parts
+    .filter((p) => !p.thought)
+    .map((p) => p.text ?? "")
+    .join("")
+    .trim();
+}
+
 export default async (req: Request, _context: Context) => {
+  const apiKey = Netlify.env.get("GEMINI_API_KEY");
+  const model = Netlify.env.get("AICARLO_MODEL") || DEFAULT_MODEL;
+
   // Comprobación rápida: abrir /api/chat en el navegador dice si el modelo está
   // configurado, sin enseñar ninguna clave.
   if (req.method === "GET") {
     return Response.json(
-      {
-        ok: true,
-        configurado: Boolean(Netlify.env.get("ANTHROPIC_API_KEY")),
-        via: Netlify.env.get("ANTHROPIC_BASE_URL") ? "netlify-ai-gateway" : "clave-propia-o-ninguna",
-        modelo: Netlify.env.get("AICARLO_MODEL") || DEFAULT_MODEL,
-      },
+      { ok: true, configurado: Boolean(apiKey), proveedor: "gemini", modelo: model },
       { headers: { "cache-control": "no-store" } },
     );
   }
@@ -68,23 +97,10 @@ export default async (req: Request, _context: Context) => {
     });
   }
 
-  if (!Netlify.env.get("ANTHROPIC_API_KEY")) {
-    return Response.json({ error: "not-configured" }, { status: 503 });
-  }
+  if (!apiKey) return Response.json({ error: "not-configured" }, { status: 503 });
 
   try {
-    const client = new Anthropic();
-    const res = await client.messages.create({
-      model: Netlify.env.get("AICARLO_MODEL") || DEFAULT_MODEL,
-      max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
-      messages,
-    });
-
-    const raw = res.content
-      .map((block) => (block.type === "text" ? block.text : ""))
-      .join("")
-      .trim();
+    const raw = await askGemini(apiKey, model, messages);
 
     const cards: string[] = [];
     for (const match of raw.matchAll(CARD_TAG)) {

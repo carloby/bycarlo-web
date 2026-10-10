@@ -19,21 +19,24 @@ No hay paso de compilación: Netlify publica la carpeta `public` tal cual y desp
 ## Cómo funciona el chat
 
 - **Sugerencias** («Quiero una web que venda»…): la respuesta está escrita en `CANNED`, dentro de `public/app.js`. No gastan nada.
-- **Texto libre**: va a `/api/chat`, que llama a un modelo pequeño de Claude con las instrucciones de `instrucciones.mts`.
+- **Texto libre**: va a `/api/chat`, que llama a Gemini con las instrucciones de `instrucciones.mts`.
 - **Tarjetas**: si el modelo recomienda un paquete, termina con una etiqueta como `[[paquete:web]]` y la web pinta la tarjeta.
 - **«Sí, mándamelo»**: envía el correo y la conversación al formulario `resumen` de Netlify (Forms).
-- **Límites**: 8 mensajes por conversación, 800 caracteres por mensaje, respuestas de 400 tokens como mucho y 10 peticiones por minuto por IP.
+- **Límites**: 8 mensajes por conversación, 800 caracteres por mensaje, respuestas cortas y 10 peticiones por minuto por IP.
 
 ### Clave del modelo
 
-La función usa el SDK de Anthropic sin clave en el código. Hay dos formas de dársela:
+La función habla con **Gemini** y necesita una clave guardada en Netlify:
 
-1. **Netlify AI Gateway**: en planes por créditos Netlify inyecta la clave solo, tras el primer despliegue en producción.
-2. **Clave propia**: crea la variable `ANTHROPIC_API_KEY` en Netlify (ámbito *Functions*) y vuelve a desplegar.
+1. Crea la clave en [Google AI Studio](https://aistudio.google.com/apikey).
+2. En Netlify, proyecto → *Project configuration* → *Environment variables*, añade `GEMINI_API_KEY` con ámbito *Functions* y marcada como secreta.
+3. Lanza un despliegue nuevo (*Deploys* → *Trigger deploy*): la clave no se aplica hasta entonces.
 
-Sin ninguna de las dos, el chat sigue funcionando con las sugerencias y, al escribir texto libre, pide que te escriban por correo.
+Sin clave, el chat sigue funcionando con las sugerencias y, al escribir texto libre, pide que te escriban por correo.
 
-Variable opcional: `AICARLO_MODEL` para cambiar de modelo (por defecto `claude-haiku-4-5`).
+Abrir `/api/chat` en el navegador dice si la clave está activa (`"configurado": true`) sin enseñarla.
+
+Variable opcional: `AICARLO_MODEL` para cambiar de modelo (por defecto `gemini-3.8-flash`).
 
 ## Si cambias un precio
 

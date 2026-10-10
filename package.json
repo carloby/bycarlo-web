@@ -7,9 +7,6 @@
   "scripts": {
     "dev": "netlify dev"
   },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.133.0"
-  },
   "devDependencies": {
     "@netlify/functions": "^6.0.2"
   }
