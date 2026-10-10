@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bycarlo · Webs, marcas y automatizaciones</title>
+<meta name="description" content="Dime qué vendes y te digo qué web necesitas. Habla con AiCarlo, mi versión IA: contesta como yo, al grano y con precios.">
+<!-- QUITAR esta línea el día del lanzamiento: mientras esté, Google no indexa la web. -->
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0A0C">
+<meta property="og:title" content="bycarlo · Dime qué vendes y te digo qué web necesitas">
+<meta property="og:description" content="Habla con AiCarlo, mi versión IA: contesta como yo, al grano y con precios.">
+<meta property="og:type" content="website">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script>if(/Mac|iPhone|iPad|iPod/.test(navigator.platform||navigator.userAgent))document.documentElement.classList.add("apple")</script>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip" href="#chat">Ir al chat</a>
+
+<header class="site-header wrap">
+  <a class="logo" href="#inicio">bycarlo<span class="logo-dot">.</span></a>
+  <nav class="nav" aria-label="Principal">
+    <a href="#casos">Casos</a>
+    <a href="#paquetes">Paquetes</a>
+    <a href="#plantillas">Plantillas</a>
+    <a class="btn btn-light btn-sm" href="#contacto">Escríbeme</a>
+  </nav>
+</header>
+
+<main id="inicio">
+
+  <section class="hero wrap">
+    <div class="hero-head">
+      <p class="eyebrow">Web · Marca · Automatización</p>
+      <h1>Dime qué vendes y te digo qué web necesitas.</h1>
+      <p class="hero-greeting">Hola, soy AiCarlo, la versión IA de Carlo. Contesto como ella, solo que sin pausas para el café. Cuéntame qué necesita tu negocio y te digo por dónde empezar.</p>
+    </div>
+
+    <div class="chat" id="chat">
+      <div class="thread" id="thread" role="log" aria-live="polite" aria-label="Conversación con AiCarlo"></div>
+
+      <form class="composer" id="composer" autocomplete="off">
+        <label class="sr-only" for="msg">Escribe tu mensaje para AiCarlo</label>
+        <input id="msg" name="msg" type="text" maxlength="600" placeholder="Escribe qué necesitas…" enterkeyhint="send">
+        <button class="send" type="submit" aria-label="Enviar mensaje">
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+        </button>
+      </form>
+
+      <div class="chips" id="chips">
+        <button type="button" class="chip" data-canned="web">Quiero una web que venda</button>
+        <button type="button" class="chip" data-canned="marca">Necesito una marca</button>
+        <button type="button" class="chip" data-canned="auto">Automatiza mi negocio</button>
+        <button type="button" class="chip" data-canned="precio">¿Cuánto cuesta?</button>
+      </div>
+
+      <p class="disclaimer">AiCarlo es una IA y puede equivocarse. El presupuesto final te lo confirma Carlo, la de carne y hueso.</p>
+      <noscript><p class="disclaimer">El chat necesita JavaScript. Si lo tienes desactivado, escríbeme a hola@bycarlo.es.</p></noscript>
+    </div>
+
+    <ol class="steps">
+      <li><span class="step-n">01</span><span class="step-t">Me cuentas qué necesita tu negocio.</span></li>
+      <li><span class="step-n">02</span><span class="step-t">Te digo qué te hace falta y cuánto cuesta.</span></li>
+      <li><span class="step-n">03</span><span class="step-t">Si te encaja, te lo mando resumido al correo.</span></li>
+    </ol>
+
+    <div class="links">
+      <!-- PENDIENTE: enlaces reales de Instagram y LinkedIn -->
+      <a class="pill" href="https://instagram.com/" rel="noopener">Instagram <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      <a class="pill" href="https://linkedin.com/" rel="noopener">LinkedIn <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+      <a class="pill" href="#plantillas">Tienda de plantillas <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+    </div>
+  </section>
+
+  <section class="section wrap" id="casos">
+    <div class="section-head">
+      <h2>Para quien no tiene ganas de chatear.</h2>
+      <p>Esto es lo que he hecho últimamente.</p>
+    </div>
+    <div class="grid">
+      <!-- PENDIENTE: imagen, resultado y permiso del cliente en cada caso -->
+      <article class="case">
+        <div class="case-img">[IMAGEN: nueva identidad de A Quinta da Auga]</div>
+        <div class="case-body">
+          <p class="kicker">Hotel · Rebranding</p>
+          <h3>A Quinta da Auga</h3>
+          <p class="muted">Rebranding completo del hotel.</p>
+          <p class="case-result">[RESULTADO: un dato concreto]</p>
+        </div>
+      </article>
+      <article class="case">
+        <div class="case-img">[IMAGEN: captura de la web de Hygge Pilates]</div>
+        <div class="case-body">
+          <p class="kicker">Estudio de pilates · Web y automatización</p>
+          <h3>Hygge Pilates</h3>
+          <p class="muted">Web, blog, email y automatizaciones del estudio.</p>
+          <p class="case-result">[RESULTADO: un dato concreto]</p>
+        </div>
+      </article>
+      <article class="case">
+        <div class="case-img">[IMAGEN: captura de la web de Liv Balance]</div>
+        <div class="case-body">
+          <p class="kicker">Salud femenina · Marca y web</p>
+          <h3>Liv Balance</h3>
+          <p class="muted">Logo, identidad y web de la marca.</p>
+          <p class="case-result">[RESULTADO: un dato concreto]</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section wrap" id="paquetes">
+    <div class="section-head">
+      <h2>Tres paquetes. Precios a la vista.</h2>
+      <p>Sin «pide presupuesto» para luego llevarte el susto.</p>
+    </div>
+    <div class="grid grid-stretch">
+      <article class="pack">
+        <h3>Web que vende</h3>
+        <p class="muted">Para empezar a captar clientes ya.</p>
+        <ul>
+          <li>Landing de una página en Framer</li>
+          <li>Textos, formulario y analítica</li>
+          <li>Entregada en una semana</li>
+        </ul>
+        <p class="price">desde 900 €</p>
+        <a class="btn btn-gray" href="#contacto">Lo quiero</a>
+      </article>
+      <article class="pack pack-featured">
+        <p class="tag">El completo</p>
+        <h3>Marca + Web</h3>
+        <p class="muted">Para que todo parezca de la misma empresa.</p>
+        <ul>
+          <li>Logo, paleta y tipografías</li>
+          <li>Guía de marca</li>
+          <li>Web completa con blog y textos</li>
+        </ul>
+        <p class="price">desde 3.000 €</p>
+        <a class="btn btn-dark" href="#contacto">Lo quiero</a>
+      </article>
+      <article class="pack">
+        <h3>Plan mensual</h3>
+        <p class="muted">Para que tu web no se quede en 2026.</p>
+        <ul>
+          <li>Blog, newsletter y piezas para redes</li>
+          <li>Web actualizada y con copias</li>
+          <li>Informe cada mes</li>
+        </ul>
+        <p class="price">desde 450 €/mes</p>
+        <a class="btn btn-gray" href="#contacto">Lo quiero</a>
+      </article>
+    </div>
+    <!-- PENDIENTE: precio de la auditoría -->
+    <p class="muted">¿No lo tienes claro? Empieza por una auditoría exprés: reviso tu web y te mando un vídeo con diez mejoras. <a href="#contacto"><strong>[PRECIO AUDITORÍA]</strong></a></p>
+  </section>
+
+  <section class="wrap band-wrap" id="plantillas">
+    <div class="band">
+      <div class="band-text">
+        <h2>¿Prefieres montártelo tú?</h2>
+        <p>Plantillas de Framer y assets listos para usar. Sí, también te vendo eso.</p>
+      </div>
+      <!-- PENDIENTE: enlace real de la tienda. Mientras esté vacía, mejor ocultar esta sección entera. -->
+      <a class="btn btn-dark btn-lg" href="#plantillas">Ver la tienda <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
+    </div>
+  </section>
+
+  <section class="section wrap about" id="contacto">
+    <!-- PENDIENTE: foto y bio -->
+    <div class="about-photo">[TU FOTO]</div>
+    <div class="about-text">
+      <h2>Soy Carlo, la de verdad.</h2>
+      <p class="lead muted">Diseño webs, marcas y automatizaciones para negocios que quieren vender más y trabajar menos. [TU BIO EN DOS O TRES LÍNEAS]</p>
+      <div class="about-cta">
+        <a class="btn btn-accent btn-lg" data-email-link href="mailto:hola@bycarlo.es">Escríbeme</a>
+        <span class="muted small">Te contesto por correo. Sin llamadas.</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-in">
+    <p>© 2026 bycarlo</p>
+    <nav class="footer-nav" aria-label="Pie">
+      <a href="https://instagram.com/" rel="noopener">Instagram</a>
+      <a href="https://linkedin.com/" rel="noopener">LinkedIn</a>
+      <a href="#plantillas">Tienda</a>
+      <a class="dim" href="/aviso-legal.html">Aviso legal</a>
+      <a class="dim" href="/privacidad.html">Privacidad</a>
+    </nav>
+  </div>
+</footer>
+
+<!-- Formulario que Netlify detecta al publicar. El chat envía aquí el correo y la conversación. -->
+<form name="resumen" method="POST" data-netlify="true" netlify-honeypot="apodo" hidden>
+  <input type="email" name="email">
+  <input type="text" name="apodo">
+  <textarea name="conversacion"></textarea>
+</form>
+
+<script src="/app.js" defer></script>
+</body>
+</html>
