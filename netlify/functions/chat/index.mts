@@ -10,9 +10,9 @@ import { findUrl, inspectWeb } from "./web.mts";
 const MODELS = ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"];
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const TRY_TIMEOUT_MS = 12000; // espera máxima por intento
-const MAX_MESSAGES = 16; // mensajes de historial que se aceptan
+const MAX_MESSAGES = 24; // mensajes de historial que se aceptan
 const MAX_CHARS = 800; // caracteres por mensaje
-const MAX_USER_TURNS = 8; // mensajes del visitante por conversación
+const MAX_USER_TURNS = 12; // mensajes del visitante por conversación
 const MAX_OUTPUT_TOKENS = 1200; // techo de cada respuesta (la brevedad la piden las instrucciones)
 const CARD_KEYS = ["web", "marca", "mensual", "auto"];
 const CARD_TAG = /\[\[\s*paquete\s*:\s*([a-z]+)\s*\]\]/gi;
@@ -86,7 +86,9 @@ async function callModel(apiKey: string, model: string, payload: unknown): Promi
 /** Prueba los modelos en orden hasta que uno conteste con texto. */
 async function ask(apiKey: string, payload: unknown): Promise<{ texto: string; intentos: Attempt[] }> {
   const intentos: Attempt[] = [];
-  for (const model of modelList()) {
+  const models = modelList();
+  // Tras recorrer la lista se da una segunda oportunidad al primero: los fallos suelen ser picos.
+  for (const model of [...models, models[0]]) {
     const attempt = await callModel(apiKey, model, payload);
     intentos.push(attempt);
     if (attempt.texto) return { texto: attempt.texto, intentos };

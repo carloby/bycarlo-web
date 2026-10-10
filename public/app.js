@@ -8,7 +8,7 @@
 
   // PENDIENTE: correo real de contacto. Se usa en los mensajes de error y en el botón "Escríbeme".
   const EMAIL = "hola@bycarlo.es";
-  const MAX_USER_TURNS = 8;
+  const MAX_USER_TURNS = 12;
 
   // Paquetes que el chat puede enseñar como tarjeta. Si cambias un precio aquí,
   // cámbialo también en index.html y en netlify/functions/chat/instrucciones.mts.
@@ -253,16 +253,22 @@
 
     let data = null;
     let status = 0;
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history.slice(-12) }),
-      });
-      status = res.status;
-      data = await res.json().catch(() => null);
-    } catch (err) {
-      data = null;
+    // Si falla por un pico del servidor, se reintenta una vez antes de rendirse.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: history.slice(-20) }),
+        });
+        status = res.status;
+        data = await res.json().catch(() => null);
+      } catch (err) {
+        status = 0;
+        data = null;
+      }
+      if ((data && data.reply) || (status >= 400 && status < 500)) break;
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
     }
 
     typing.remove();

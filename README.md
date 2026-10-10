@@ -24,7 +24,7 @@ No hay paso de compilación: Netlify publica la carpeta `public` tal cual y desp
 - **Horóscopo web**: broma que acaba en un consejo real; está descrita en las instrucciones.
 - **Tarjetas**: si el modelo recomienda un paquete, termina con una etiqueta como `[[paquete:web]]` y la web pinta la tarjeta.
 - **«Sí, mándamelo»**: envía el correo y la conversación al formulario `resumen` de Netlify (Forms).
-- **Límites**: 8 mensajes por conversación, 800 caracteres por mensaje, respuestas cortas y 10 peticiones por minuto por IP.
+- **Límites**: 12 mensajes por conversación, 800 caracteres por mensaje, respuestas cortas y 10 peticiones por minuto por IP.
 
 ### Clave del modelo
 
