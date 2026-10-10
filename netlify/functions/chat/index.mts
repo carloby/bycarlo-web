@@ -4,6 +4,7 @@
 
 import type { Config, Context } from "@netlify/functions";
 import { SYSTEM_PROMPT } from "./instrucciones.mts";
+import { findUrl, inspectWeb } from "./web.mts";
 
 const DEFAULT_MODEL = "gemini-3.8-flash";
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -34,12 +35,17 @@ function sanitize(raw: unknown): Msg[] | null {
   return out;
 }
 
+function systemText(): string {
+  const hoy = new Intl.DateTimeFormat("es-ES", { dateStyle: "full", timeZone: "Europe/Madrid" }).format(new Date());
+  return `${SYSTEM_PROMPT}\n\n# Hoy\nHoy es ${hoy}.`;
+}
+
 async function askGemini(apiKey: string, model: string, messages: Msg[]): Promise<string> {
   const res = await fetch(`${API_BASE}/${encodeURIComponent(model)}:generateContent`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      systemInstruction: { parts: [{ text: systemText() }] },
       contents: messages.map((m) => ({
         role: m.role === "assistant" ? "model" : "user",
         parts: [{ text: m.content }],
@@ -98,6 +104,14 @@ export default async (req: Request, _context: Context) => {
   }
 
   if (!apiKey) return Response.json({ error: "not-configured" }, { status: 503 });
+
+  // Si el visitante ha pegado una dirección web, se lee y se le pasa al modelo como datos.
+  const last = messages[messages.length - 1];
+  const url = findUrl(last.content);
+  if (url) {
+    const ficha = await inspectWeb(url);
+    last.content += `\n\n[DATOS DE LA WEB DEL VISITANTE]\n${ficha}\n[FIN DE LOS DATOS]`;
+  }
 
   try {
     const raw = await askGemini(apiKey, model, messages);

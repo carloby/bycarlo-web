@@ -20,6 +20,8 @@ No hay paso de compilación: Netlify publica la carpeta `public` tal cual y desp
 
 - **Sugerencias** («Quiero una web que venda»…): la respuesta está escrita en `CANNED`, dentro de `public/app.js`. No gastan nada.
 - **Texto libre**: va a `/api/chat`, que llama a Gemini con las instrucciones de `instrucciones.mts`.
+- **Revisión de webs**: si el visitante pega un enlace, la función lee esa página (`netlify/functions/chat/web.mts`) y le pasa al modelo una ficha con titular, botones, precios, contacto y demás, para que dé tres mejoras concretas.
+- **Horóscopo web**: broma que acaba en un consejo real; está descrita en las instrucciones.
 - **Tarjetas**: si el modelo recomienda un paquete, termina con una etiqueta como `[[paquete:web]]` y la web pinta la tarjeta.
 - **«Sí, mándamelo»**: envía el correo y la conversación al formulario `resumen` de Netlify (Forms).
 - **Límites**: 8 mensajes por conversación, 800 caracteres por mensaje, respuestas cortas y 10 peticiones por minuto por IP.

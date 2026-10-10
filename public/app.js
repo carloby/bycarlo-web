@@ -52,6 +52,16 @@
       a: "Si copias datos a mano de un sitio a otro, estás regalando horas. Empiezo por lo que más se repite: bienvenida a contactos nuevos, seguimiento de interesados y petición de reseñas.",
       cards: ["auto"], offer: true,
     },
+    revisa: {
+      q: "¿Por qué mi web no vende?",
+      a: "Pégame aquí el enlace de tu web y te digo tres cosas que cambiaría. Gratis y sin anestesia.",
+      cards: [], offer: false, focus: true,
+    },
+    horoscopo: {
+      q: "Mi horóscopo web",
+      a: "Dime tu signo y te leo lo que dicen los astros de tu web. Aviso: la culpa casi nunca es de Plutón.",
+      cards: [], offer: false, focus: true,
+    },
     precio: {
       q: "¿Cuánto cuesta?",
       a: "Al grano, que me gusta. Hay tres formas de trabajar conmigo. Si no sabes cuál es la tuya, dime a qué te dedicas y te lo digo yo.",
@@ -148,7 +158,7 @@
     thread.querySelectorAll(".cta").forEach((n) => n.remove());
 
     const box = el("div", "bubble bubble-bot cta");
-    box.appendChild(el("div", "", "¿Te lo mando resumido al correo? Sin llamadas, que por escrito queda todo más claro."));
+    box.appendChild(el("div", "", "¿Te lo mando resumido al correo? Por escrito queda todo más claro."));
     const yes = el("button", "btn btn-accent", "Sí, mándamelo");
     yes.type = "button";
     box.appendChild(yes);
@@ -230,6 +240,7 @@
     history.push({ role: "assistant", content: c.a });
     addCards(c.cards);
     if (c.offer) offerSummary();
+    if (c.focus) input.focus({ preventScroll: true });
   }
 
   async function runFree(text) {
