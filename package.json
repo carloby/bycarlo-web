@@ -9,8 +9,5 @@
   },
   "devDependencies": {
     "@netlify/functions": "^6.0.2"
-  },
-  "dependencies": {
-    "astronomy-engine": "^2.1.19"
   }
 }

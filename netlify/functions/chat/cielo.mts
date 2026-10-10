@@ -2,13 +2,12 @@
 // AiCarlo lo usa en el horóscopo para culpar a los planetas con datos reales:
 // en qué signo están el Sol y la Luna, la fase lunar y qué planetas están retrógrados.
 
-import * as astronomia from "astronomy-engine";
+// La librería de cálculo (astronomy-engine, licencia MIT) va copiada en ./vendor en vez de
+// instalada con npm: el paquete publicado no carga bien en las funciones de Netlify.
+// @ts-ignore: el archivo copiado no trae tipos
+import { Body, Ecliptic, EclipticGeoMoon, GeoVector, MoonPhase, SunPosition } from "./vendor/astronomy.mjs";
 
-// En Netlify la librería se carga como módulo CommonJS y sus funciones llegan dentro de "default";
-// en otros entornos llegan sueltas. Así funciona en los dos.
-const lib = ((astronomia as { default?: unknown }).default ?? astronomia) as typeof astronomia;
-const { Body, Ecliptic, EclipticGeoMoon, GeoVector, MoonPhase, SunPosition } = lib;
-type Body = astronomia.Body;
+type Body = string;
 
 const SIGNOS = ["Aries", "Tauro", "Géminis", "Cáncer", "Leo", "Virgo", "Libra", "Escorpio", "Sagitario", "Capricornio", "Acuario", "Piscis"];
 
