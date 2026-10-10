@@ -78,6 +78,36 @@ export default async (req: Request, _context: Context) => {
   // Comprobación rápida: abrir /api/chat en el navegador dice si el modelo está
   // configurado, sin enseñar ninguna clave.
   if (req.method === "GET") {
+    // /api/chat?diagnostico=1 hace una llamada mínima al modelo y dice qué responde Google.
+    if (apiKey && new URL(req.url).searchParams.has("diagnostico")) {
+      try {
+        const res = await fetch(`${API_BASE}/${encodeURIComponent(model)}:generateContent`, {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: "Di hola en dos palabras." }] }],
+            generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
+          }),
+          signal: AbortSignal.timeout(25000),
+        });
+        const raw = await res.text();
+        let detalle = raw.slice(0, 400);
+        let fin = "";
+        let texto = "";
+        try {
+          const j = JSON.parse(raw);
+          if (j.error) detalle = `${j.error.status || ""}: ${String(j.error.message || "").slice(0, 300)}`;
+          else {
+            fin = j.candidates?.[0]?.finishReason || "";
+            texto = (j.candidates?.[0]?.content?.parts || []).filter((p: { thought?: boolean }) => !p.thought).map((p: { text?: string }) => p.text || "").join("").slice(0, 80);
+            detalle = JSON.stringify(j.usageMetadata || {}).slice(0, 300);
+          }
+        } catch {}
+        return Response.json({ modelo: model, estado: res.status, fin, texto, detalle }, { headers: { "cache-control": "no-store" } });
+      } catch (err) {
+        return Response.json({ modelo: model, estado: 0, detalle: String(err).slice(0, 300) }, { headers: { "cache-control": "no-store" } });
+      }
+    }
     return Response.json(
       { ok: true, configurado: Boolean(apiKey), proveedor: "gemini", modelo: model },
       { headers: { "cache-control": "no-store" } },
