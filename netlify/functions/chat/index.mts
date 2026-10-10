@@ -5,6 +5,7 @@
 import type { Config, Context } from "@netlify/functions";
 import { SYSTEM_PROMPT } from "./instrucciones.mts";
 import { findUrl, inspectWeb } from "./web.mts";
+import { cieloDeHoy } from "./cielo.mts";
 
 // Se prueban en orden: si el primero está saturado o sin cupo, se pasa al siguiente.
 const MODELS = ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"];
@@ -45,7 +46,14 @@ function modelList(): string[] {
 
 function systemText(): string {
   const hoy = new Intl.DateTimeFormat("es-ES", { dateStyle: "full", timeZone: "Europe/Madrid" }).format(new Date());
-  return `${SYSTEM_PROMPT}\n\n# Hoy\nHoy es ${hoy}.`;
+  // El cielo es un adorno del horóscopo: si el cálculo fallara, el chat sigue sin él.
+  let cielo = "";
+  try {
+    cielo = `\n\n# El cielo de hoy (datos astronómicos reales)\n${cieloDeHoy()}`;
+  } catch (err) {
+    console.error("AiCarlo: no se pudo calcular el cielo", String(err));
+  }
+  return `${SYSTEM_PROMPT}\n\n# Hoy\nHoy es ${hoy}.${cielo}`;
 }
 
 /** Una llamada a un modelo concreto. No lanza errores: devuelve qué pasó. */
