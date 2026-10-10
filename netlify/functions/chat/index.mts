@@ -7,9 +7,9 @@ import { SYSTEM_PROMPT } from "./instrucciones.mts";
 import { findUrl, inspectWeb } from "./web.mts";
 
 // Se prueban en orden: si el primero está saturado o sin cupo, se pasa al siguiente.
-const MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
+const MODELS = ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"];
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const TRY_TIMEOUT_MS = 15000; // espera máxima por intento
+const TRY_TIMEOUT_MS = 12000; // espera máxima por intento
 const MAX_MESSAGES = 16; // mensajes de historial que se aceptan
 const MAX_CHARS = 800; // caracteres por mensaje
 const MAX_USER_TURNS = 8; // mensajes del visitante por conversación
