@@ -21,12 +21,7 @@
     tienda: {
       kind: "Paquete", name: "Tienda online", short: "Catálogo, pagos y envíos",
       desc: "Tienda en Shopify o WooCommerce con catálogo, pagos, envíos y textos de producto.",
-      price: "desde 2.500 €", cta: "Cuéntame qué vendes", href: "#contacto",
-    },
-    marca: {
-      kind: "Paquete", name: "Marca + Web", short: "Identidad y web completa",
-      desc: "Logo, paleta, tipografías, guía de marca y la web completa.",
-      price: "desde 3.000 €", cta: "Ver paquete", href: "#paquetes",
+      price: "desde 2.500 €", cta: "Ver paquete", href: "#paquetes",
     },
     mensual: {
       kind: "Paquete", name: "Plan mensual", short: "Contenido, email y web al día",
@@ -52,11 +47,6 @@
       a: "Una web bonita que no vende es un cuadro caro. Te hace falta una página con un mensaje claro, una sola acción y un formulario que te avise cuando alguien escribe. Justo esto:",
       cards: ["web"], offer: true,
     },
-    marca: {
-      q: "Necesito una marca",
-      a: "Si tu logo lo hizo tu primo en 2016, hablemos. Una marca no es solo el logo: es que tu web, tus redes y tus correos parezcan de la misma empresa. Por eso suele ir junto con la web:",
-      cards: ["marca"], offer: true,
-    },
     auto: {
       q: "Automatiza mi negocio",
       a: "Si copias datos a mano de un sitio a otro, estás regalando horas. Empiezo por lo que más se repite: bienvenida a contactos nuevos, seguimiento de interesados y petición de reseñas.",
@@ -75,7 +65,7 @@
     precio: {
       q: "¿Cuánto cuesta?",
       a: "Al grano, que me gusta. Estas son las formas de trabajar conmigo. Si no sabes cuál es la tuya, dime a qué te dedicas y te lo digo yo.",
-      cards: ["web", "tienda", "marca", "mensual"], offer: false,
+      cards: ["web", "tienda", "mensual"], offer: false,
     },
   };
 
