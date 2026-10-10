@@ -9,7 +9,7 @@ export const DATOS = {
   proyectosActivos: null as number | null,
   // PENDIENTE: enlace de tu agenda para videollamadas. Vacío = "pídemelo por correo".
   calendario: "",
-  correo: "hola@bycarlo.es",
+  correo: "carloby@gmail.com",
 };
 
 const carga =

@@ -54,7 +54,7 @@ Los precios están en tres sitios y tienen que coincidir:
 
 - [ ] Sustituir todo lo que está entre corchetes: imágenes y resultado de los casos, foto, bio y precio de la auditoría
 - [ ] Permiso de los clientes para aparecer como caso
-- [ ] Correo real de contacto (`EMAIL` en `public/app.js`; ahora `hola@bycarlo.es`)
+- [ ] Correo real de contacto (`EMAIL` en `public/app.js`; ahora `carloby@gmail.com`)
 - [ ] Enlaces reales de Instagram, LinkedIn y la tienda (o ocultar la sección de plantillas mientras esté vacía)
 - [ ] Reescribir las respuestas de `CANNED` y los ejemplos de tono de `instrucciones.mts` con tu voz
 - [ ] Redactar aviso legal y política de privacidad

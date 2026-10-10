@@ -6,8 +6,8 @@
 (() => {
   "use strict";
 
-  // PENDIENTE: correo real de contacto. Se usa en los mensajes de error y en el botón "Escríbeme".
-  const EMAIL = "hola@bycarlo.es";
+  // Correo de contacto (provisional hasta tener uno del dominio). Se usa en los avisos del chat y en el botón "Escríbeme".
+  const EMAIL = "carloby@gmail.com";
   const MAX_USER_TURNS = 12;
 
   // Paquetes que el chat puede enseñar como tarjeta. Si cambias un precio aquí,
