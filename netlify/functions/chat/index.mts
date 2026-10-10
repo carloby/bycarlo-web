@@ -35,6 +35,20 @@ function sanitize(raw: unknown): Msg[] | null {
 }
 
 export default async (req: Request, _context: Context) => {
+  // Comprobación rápida: abrir /api/chat en el navegador dice si el modelo está
+  // configurado, sin enseñar ninguna clave.
+  if (req.method === "GET") {
+    return Response.json(
+      {
+        ok: true,
+        configurado: Boolean(Netlify.env.get("ANTHROPIC_API_KEY")),
+        via: Netlify.env.get("ANTHROPIC_BASE_URL") ? "netlify-ai-gateway" : "clave-propia-o-ninguna",
+        modelo: Netlify.env.get("AICARLO_MODEL") || DEFAULT_MODEL,
+      },
+      { headers: { "cache-control": "no-store" } },
+    );
+  }
+
   let body: { messages?: unknown };
   try {
     body = await req.json();
@@ -89,7 +103,7 @@ export default async (req: Request, _context: Context) => {
 
 export const config: Config = {
   path: "/api/chat",
-  method: "POST",
+  method: ["GET", "POST"],
   // Freno contra abusos: 10 mensajes por minuto desde una misma IP.
   rateLimit: {
     action: "rate_limit",
