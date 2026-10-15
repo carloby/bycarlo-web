@@ -11,12 +11,14 @@ import { cieloDeHoy } from "./cielo.mts";
 const MODELS = ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"];
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const TRY_TIMEOUT_MS = 12000; // espera máxima por intento
-const TOTAL_BUDGET_MS = 22000; // tiempo total para contestar, por debajo del límite de Netlify
+const TOTAL_BUDGET_MS = 25000; // tiempo total desde que llega la petición, por debajo del límite de Netlify
 const MIN_TRY_MS = 4000; // si queda menos que esto, no se empieza otro intento
 const MAX_MESSAGES = 24; // mensajes de historial que se aceptan
 const MAX_CHARS = 800; // caracteres por mensaje
 const MAX_USER_TURNS = 12; // mensajes del visitante por conversación
-const MAX_OUTPUT_TOKENS = 1200; // techo de cada respuesta (la brevedad la piden las instrucciones)
+// Techo de cada respuesta. Es alto a propósito: el "pensamiento" del modelo gasta de este mismo cupo,
+// y con 1200 las revisiones de webs se cortaban a mitad de frase. La brevedad la piden las instrucciones.
+const MAX_OUTPUT_TOKENS = 8192;
 const CARD_KEYS = ["web", "tienda", "mensual", "auto", "auditoria"];
 const CARD_TAG = /\[\[\s*paquete\s*:\s*([a-z]+)\s*\]\]/gi;
 
@@ -87,17 +89,27 @@ async function callModel(apiKey: string, model: string, payload: unknown, timeou
       .map((p) => p.text ?? "")
       .join("")
       .trim();
-    return { modelo: model, estado: res.status, detalle: candidate?.finishReason ?? "", texto };
+    const motivo = candidate?.finishReason ?? "";
+    // Si aun así se queda sin espacio, se recorta hasta la última frase completa: mejor corta que a medias.
+    if (motivo === "MAX_TOKENS" && texto) {
+      console.error("AiCarlo: respuesta cortada por longitud", model);
+      // Último final de frase que no sea el número de una lista ("1.").
+      let fin = -1;
+      for (const m of texto.matchAll(/[^\d\s][.!?…](?=\s|$)/g)) fin = (m.index ?? 0) + m[0].length;
+      const recortado = fin > 40 ? texto.slice(0, fin).trim() : "";
+      return { modelo: model, estado: res.status, detalle: motivo, texto: recortado };
+    }
+    return { modelo: model, estado: res.status, detalle: motivo, texto };
   } catch (err) {
     return { modelo: model, estado: 0, detalle: String(err).slice(0, 200), texto: "" };
   }
 }
 
 /** Prueba los modelos en orden hasta que uno conteste con texto. */
-async function ask(apiKey: string, payload: unknown): Promise<{ texto: string; intentos: Attempt[] }> {
+async function ask(apiKey: string, payload: unknown, startedAt = Date.now()): Promise<{ texto: string; intentos: Attempt[] }> {
   const intentos: Attempt[] = [];
   const models = modelList();
-  const deadline = Date.now() + TOTAL_BUDGET_MS;
+  const deadline = startedAt + TOTAL_BUDGET_MS;
   // Tras recorrer la lista se da una segunda oportunidad al primero: los fallos suelen ser picos.
   for (const model of [...models, models[0]]) {
     const left = deadline - Date.now();
@@ -112,6 +124,7 @@ async function ask(apiKey: string, payload: unknown): Promise<{ texto: string; i
 }
 
 export default async (req: Request, _context: Context) => {
+  const startedAt = Date.now();
   const apiKey = Netlify.env.get("GEMINI_API_KEY");
 
   if (req.method === "GET") {
@@ -167,7 +180,7 @@ export default async (req: Request, _context: Context) => {
       parts: [{ text: m.content }],
     })),
     generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.7 },
-  });
+  }, startedAt);
 
   if (!texto) {
     console.error("AiCarlo: ningún modelo contestó", JSON.stringify(intentos));
