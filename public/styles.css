@@ -164,8 +164,6 @@ h2 { font-weight: 700; font-size: clamp(32px, 3.6vw, 52px); line-height: 1.06; l
 .grid { display: flex; flex-wrap: wrap; gap: 20px; }
 .grid > * { flex: 1 1 280px; min-width: 0; }
 .grid-stretch { align-items: stretch; }
-.grid-cases > * { flex-basis: 420px; }
-.grid-cases .case-img { height: 260px; }
 .kicker { font-size: 14px; font-weight: 600; color: var(--text-4); }
 
 .case { display: flex; flex-direction: column; overflow: hidden; background: var(--surface); border-radius: var(--radius); }
