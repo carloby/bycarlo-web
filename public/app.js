@@ -255,6 +255,7 @@
     let status = 0;
     // Si falla por un pico del servidor, se reintenta una vez antes de rendirse.
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      const started = Date.now();
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
@@ -268,6 +269,8 @@
         data = null;
       }
       if ((data && data.reply) || (status >= 400 && status < 500)) break;
+      // Si ya ha tardado mucho, otro intento solo alargaría la espera.
+      if (Date.now() - started > 10000) break;
       if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
     }
 

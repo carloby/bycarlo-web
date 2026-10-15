@@ -11,6 +11,8 @@ import { cieloDeHoy } from "./cielo.mts";
 const MODELS = ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"];
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const TRY_TIMEOUT_MS = 12000; // espera máxima por intento
+const TOTAL_BUDGET_MS = 22000; // tiempo total para contestar, por debajo del límite de Netlify
+const MIN_TRY_MS = 4000; // si queda menos que esto, no se empieza otro intento
 const MAX_MESSAGES = 24; // mensajes de historial que se aceptan
 const MAX_CHARS = 800; // caracteres por mensaje
 const MAX_USER_TURNS = 12; // mensajes del visitante por conversación
@@ -57,13 +59,13 @@ function systemText(): string {
 }
 
 /** Una llamada a un modelo concreto. No lanza errores: devuelve qué pasó. */
-async function callModel(apiKey: string, model: string, payload: unknown): Promise<Attempt> {
+async function callModel(apiKey: string, model: string, payload: unknown, timeoutMs = TRY_TIMEOUT_MS): Promise<Attempt> {
   try {
     const res = await fetch(`${API_BASE}/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(TRY_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     const raw = await res.text();
     let data: {
@@ -95,9 +97,12 @@ async function callModel(apiKey: string, model: string, payload: unknown): Promi
 async function ask(apiKey: string, payload: unknown): Promise<{ texto: string; intentos: Attempt[] }> {
   const intentos: Attempt[] = [];
   const models = modelList();
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
   // Tras recorrer la lista se da una segunda oportunidad al primero: los fallos suelen ser picos.
   for (const model of [...models, models[0]]) {
-    const attempt = await callModel(apiKey, model, payload);
+    const left = deadline - Date.now();
+    if (left < MIN_TRY_MS) break;
+    const attempt = await callModel(apiKey, model, payload, Math.min(TRY_TIMEOUT_MS, left));
     intentos.push(attempt);
     if (attempt.texto) return { texto: attempt.texto, intentos };
     // Una clave mala o una petición mal formada fallarán igual en todos: no se insiste.
@@ -148,7 +153,10 @@ export default async (req: Request, _context: Context) => {
   const last = messages[messages.length - 1];
   const url = findUrl(last.content);
   if (url) {
-    const ficha = await inspectWeb(url);
+    const ficha = await Promise.race([
+      inspectWeb(url),
+      new Promise<string>((r) => setTimeout(() => r("No se pudo leer la web a tiempo."), 8000)),
+    ]);
     last.content += `\n\n[DATOS DE LA WEB DEL VISITANTE]\n${ficha}\n[FIN DE LOS DATOS]`;
   }
 
