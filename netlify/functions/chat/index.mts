@@ -11,6 +11,7 @@ import { cieloDeHoy } from "./cielo.mts";
 const MODELS = ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"];
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const TRY_TIMEOUT_MS = 9000; // espera máxima por intento
+const FIRST_TRY_MS = 8000; // el primer modelo tiene menos: si se atasca, se pasa pronto al rápido
 // Tiempo total desde que llega la petición. Netlify corta a los 26 s contando también el arranque en frío
 // (unos 2 s), así que hay que dejar margen: con 25 s la función moría antes de poder contestar.
 const TOTAL_BUDGET_MS = 19000;
@@ -110,20 +111,23 @@ async function callModel(apiKey: string, model: string, payload: unknown, timeou
 }
 
 /** Prueba los modelos en orden hasta que uno conteste con texto. */
-async function ask(apiKey: string, payload: unknown, startedAt = Date.now()): Promise<{ texto: string; intentos: Attempt[] }> {
+async function ask(apiKey: string, payload: unknown, startedAt = Date.now(), rapido = false): Promise<{ texto: string; intentos: Attempt[] }> {
   const intentos: Attempt[] = [];
-  const models = modelList();
+  // Si el primero se atasca, el siguiente es el ligero (contesta en 1–3 s), no otro igual de lento.
+  // En "rápido" (el segundo intento del navegador) se empieza directamente por el ligero.
+  const all = modelList();
+  const lite = all.find((m) => /lite/.test(m)) ?? all[all.length - 1];
+  const models = Array.from(new Set(rapido ? [lite, all[0]] : [all[0], lite, ...all]));
   const deadline = startedAt + TOTAL_BUDGET_MS;
   // Se pide pensar poco; si un modelo no admite ese ajuste, se repite sin él.
   const base = payload as { generationConfig?: Record<string, unknown> };
   const withThinking = { ...base, generationConfig: { ...base.generationConfig, thinkingConfig: THINKING } };
   let current: unknown = withThinking;
-  // Tras recorrer la lista se da una segunda oportunidad al primero: los fallos suelen ser picos.
-  for (const model of [...models, models[0]]) {
+  for (const [i, model] of models.entries()) {
     const left = deadline - Date.now();
     if (left < MIN_TRY_MS) break;
     const t0 = Date.now();
-    let attempt = await callModel(apiKey, model, current, Math.min(TRY_TIMEOUT_MS, left));
+    let attempt = await callModel(apiKey, model, current, Math.min(i === 0 && !rapido ? FIRST_TRY_MS : TRY_TIMEOUT_MS, left));
     if (attempt.estado === 400 && /thinking/i.test(attempt.detalle) && current !== payload) {
       current = payload;
       const again = deadline - Date.now();
@@ -156,7 +160,7 @@ export default async (req: Request, _context: Context) => {
     return Response.json({ ok: true, configurado: Boolean(apiKey), proveedor: "gemini", modelos: modelList() }, { headers });
   }
 
-  let body: { messages?: unknown };
+  let body: { messages?: unknown; rapido?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -195,7 +199,7 @@ export default async (req: Request, _context: Context) => {
       parts: [{ text: m.content }],
     })),
     generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.7 },
-  }, startedAt);
+  }, startedAt, body?.rapido === true);
 
   if (!texto) {
     console.error("AiCarlo: ningún modelo contestó", JSON.stringify(intentos));

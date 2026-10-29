@@ -25,7 +25,7 @@
     <a href="#casos">Casos</a>
     <a href="#paquetes">Paquetes</a>
     <a href="#plantillas">Plantillas</a>
-    <a class="btn btn-light btn-sm" href="#contacto">Escríbeme</a>
+    <a class="btn btn-light btn-sm" href="#pedido" data-pedido="">Empezar proyecto</a>
   </nav>
 </header>
 
@@ -134,7 +134,7 @@
           <li>Entregada en una semana</li>
         </ul>
         <p class="price">desde 900 €</p>
-        <a class="btn btn-gray" href="#contacto">Lo quiero</a>
+        <a class="btn btn-gray" href="#pedido" data-pedido="web">Lo quiero</a>
       </article>
       <article class="pack pack-featured">
         <p class="tag">Con carrito</p>
@@ -146,7 +146,7 @@
           <li>Textos de producto que explican y venden</li>
         </ul>
         <p class="price">desde 2.500 €</p>
-        <a class="btn btn-dark" href="#contacto">Lo quiero</a>
+        <a class="btn btn-dark" href="#pedido" data-pedido="tienda">Lo quiero</a>
       </article>
       <article class="pack">
         <h3>Plan mensual</h3>
@@ -157,12 +157,12 @@
           <li>Informe cada mes</li>
         </ul>
         <p class="price">desde 450 €/mes</p>
-        <a class="btn btn-gray" href="#contacto">Lo quiero</a>
+        <a class="btn btn-gray" href="#pedido" data-pedido="mensual">Lo quiero</a>
       </article>
     </div>
     <div class="extras">
       <p class="muted">¿No tienes logo, o el que tienes no vale? Te hago uno básico como extra: una propuesta, sin rondas de cambios. <strong>200 €</strong></p>
-      <p class="muted">¿No lo tienes claro? Empieza por una auditoría exprés: reviso tu web y te mando un vídeo con diez mejoras. <a href="#contacto"><strong>150 €</strong></a></p>
+      <p class="muted">¿No lo tienes claro? Empieza por una auditoría exprés: reviso tu web y te mando un vídeo con diez mejoras. <a href="#pedido" data-pedido="auditoria"><strong>150 €</strong></a></p>
     </div>
   </section>
 
@@ -188,8 +188,8 @@
       <h2>Soy Carlo, la de verdad.</h2>
       <p class="lead muted">Diseño webs, tiendas y automatizaciones para negocios que quieren vender más y trabajar menos. Como yo.</p>
       <div class="about-cta">
-        <a class="btn btn-accent btn-lg" data-email-link href="mailto:carloby@gmail.com">Escríbeme</a>
-        <span class="muted small">Te contesto por correo. Llamadas, solo si insistes.</span>
+        <a class="btn btn-accent btn-lg" href="#pedido" data-pedido="">Empezar proyecto</a>
+        <span class="muted small">Me cuentas qué necesitas y te mando la propuesta con precio cerrado. ¿Es otra cosa? <a data-email-link href="mailto:carloby@gmail.com">Escríbeme</a>.</span>
       </div>
     </div>
   </section>
@@ -208,6 +208,54 @@
     </nav>
   </div>
 </footer>
+
+<!-- Ventana de pedido: la abren los botones "Lo quiero" y "Empezar proyecto". Netlify la detecta como formulario "pedido". -->
+<dialog class="pedido" id="pedido" aria-labelledby="pedido-title">
+  <button type="button" class="pedido-close" aria-label="Cerrar">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
+  <form class="pedido-form" id="pedido-form" name="pedido" method="POST" data-netlify="true" netlify-honeypot="apodo">
+    <input type="hidden" name="form-name" value="pedido">
+    <input type="hidden" name="conversacion" value="">
+    <p class="sr-only"><label>No rellenes esto <input name="apodo" tabindex="-1" autocomplete="off"></label></p>
+    <h2 id="pedido-title">Cuéntame tu proyecto</h2>
+    <p class="muted">Dos minutos. Te mando la propuesta con precio cerrado y el enlace para reservar.</p>
+    <label class="field">
+      <span>Qué quieres</span>
+      <select name="paquete" required>
+        <option value="web">Web que vende · desde 900 €</option>
+        <option value="tienda">Tienda online · desde 2.500 €</option>
+        <option value="mensual">Plan mensual · desde 450 €/mes</option>
+        <option value="auditoria">Auditoría exprés · 150 €</option>
+        <option value="auto">Automatización a medida · desde 300 €</option>
+        <option value="nose">Aún no lo sé, aconséjame</option>
+      </select>
+    </label>
+    <div class="field-row">
+      <label class="field"><span>Tu nombre</span><input name="nombre" autocomplete="name" required></label>
+      <label class="field"><span>Tu correo</span><input type="email" name="email" autocomplete="email" required></label>
+    </div>
+    <label class="field"><span>A qué se dedica tu negocio</span><input name="negocio" placeholder="Una panadería en Vigo, una clínica dental…" required></label>
+    <label class="field"><span>Tu web actual, si tienes</span><input type="url" name="web" placeholder="https://"></label>
+    <label class="field"><span>Qué necesitas</span><textarea name="detalles" rows="3" placeholder="Lo que quieres conseguir, lo que no te gusta de lo que tienes…"></textarea></label>
+    <label class="field">
+      <span>Para cuándo</span>
+      <select name="plazo">
+        <option>Cuanto antes</option>
+        <option>Este mes</option>
+        <option>Sin prisa</option>
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" name="privacidad" required> <span>Acepto la <a href="/privacidad.html">política de privacidad</a>.</span></label>
+    <p class="pedido-error" role="alert" hidden>No se ha podido enviar. Vuelve a intentarlo en un momento.</p>
+    <button type="submit" class="btn btn-accent btn-lg">Enviar pedido</button>
+  </form>
+  <div class="pedido-done" id="pedido-done" hidden>
+    <h2>Pedido recibido</h2>
+    <p class="muted">En menos de 24 horas laborables tienes en tu correo la propuesta con precio cerrado y el enlace para reservar.</p>
+    <button type="button" class="btn btn-light pedido-back">Volver a la web</button>
+  </div>
+</dialog>
 
 <!-- Formulario que Netlify detecta al publicar. El chat envía aquí el correo y la conversación. -->
 <form name="resumen" method="POST" data-netlify="true" netlify-honeypot="apodo" hidden>

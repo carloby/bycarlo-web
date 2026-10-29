@@ -1,7 +1,8 @@
 /* bycarlo.es — chat de AiCarlo
    - Las sugerencias tienen respuesta ya escrita (CANNED): instantáneas y sin coste.
    - El texto libre va a la función /api/chat, que habla con el modelo.
-   - "Sí, mándamelo" envía correo + conversación al formulario "resumen" de Netlify. */
+   - "Sí, mándamelo" envía correo + conversación al formulario "resumen" de Netlify.
+   - "Lo quiero" (paquetes y tarjetas del chat) abre la ventana de pedido: formulario "pedido" de Netlify. */
 
 (() => {
   "use strict";
@@ -16,27 +17,27 @@
     web: {
       kind: "Paquete", name: "Web que vende", short: "Landing en una semana",
       desc: "Landing en Framer con textos, formulario y analítica. Entregada en una semana.",
-      price: "desde 900 €", cta: "Ver paquete", href: "#paquetes",
+      price: "desde 900 €", cta: "Lo quiero",
     },
     tienda: {
       kind: "Paquete", name: "Tienda online", short: "Catálogo, pagos y envíos",
       desc: "Tienda en Shopify o WooCommerce con catálogo, pagos, envíos y textos de producto.",
-      price: "desde 2.500 €", cta: "Ver paquete", href: "#paquetes",
+      price: "desde 2.500 €", cta: "Lo quiero",
     },
     mensual: {
       kind: "Paquete", name: "Plan mensual", short: "Contenido, email y web al día",
       desc: "Blog, newsletter, piezas para redes y la web siempre actualizada.",
-      price: "desde 450 €/mes", cta: "Ver paquete", href: "#paquetes",
+      price: "desde 450 €/mes", cta: "Lo quiero",
     },
     auditoria: {
       kind: "Servicio", name: "Auditoría exprés", short: "Diez mejoras en vídeo",
       desc: "Carlo revisa tu web a fondo y te manda un vídeo con diez mejoras concretas.",
-      price: "150 €", cta: "La quiero", href: "#contacto",
+      price: "150 €", cta: "La quiero",
     },
     auto: {
       kind: "Servicio", name: "Automatización a medida", short: "Un flujo funcionando",
       desc: "Un flujo en Make funcionando y documentado para que lo entiendas.",
-      price: "desde 300 €", cta: "Cuéntame el tuyo", href: "#contacto",
+      price: "desde 300 €", cta: "Lo quiero",
     },
   };
 
@@ -113,7 +114,8 @@
     main.append(el("div", "card-kind", p.kind), el("div", "card-name", p.name), el("div", "card-desc", p.desc));
     const side = el("div", "card-side");
     const link = el("a", "btn btn-light", p.cta);
-    link.href = p.href;
+    link.href = "#pedido";
+    link.dataset.pedido = key;
     side.append(el("div", "card-price", p.price), link);
     card.append(main, side);
     add(card);
@@ -222,11 +224,78 @@
     }
   }
 
+  /* ---------- pedido ---------- */
+
+  const pedido = document.getElementById("pedido");
+  const pedidoForm = document.getElementById("pedido-form");
+  const pedidoDone = document.getElementById("pedido-done");
+
+  function addPedidoBubble(text) {
+    const box = el("div", "bubble bubble-bot cta");
+    box.appendChild(el("div", "", text));
+    const go = el("a", "btn btn-accent", "Pedir mi paquete");
+    go.href = "#pedido";
+    go.dataset.pedido = "";
+    box.appendChild(go);
+    add(box);
+  }
+
+  function openPedido(key) {
+    if (!pedido || typeof pedido.showModal !== "function") return false;
+    pedidoForm.hidden = false;
+    pedidoDone.hidden = true;
+    if (key && pedidoForm.paquete.querySelector('option[value="' + key + '"]')) pedidoForm.paquete.value = key;
+    pedido.showModal();
+    pedidoForm.querySelector("input, select, textarea").focus();
+    return true;
+  }
+
+  document.addEventListener("click", (ev) => {
+    const trigger = ev.target.closest("[data-pedido]");
+    if (trigger && openPedido(trigger.dataset.pedido)) ev.preventDefault();
+  });
+
+  if (pedido) {
+    pedido.querySelector(".pedido-close").addEventListener("click", () => pedido.close());
+    pedido.querySelector(".pedido-back").addEventListener("click", () => pedido.close());
+    pedido.addEventListener("click", (ev) => { if (ev.target === pedido) pedido.close(); });
+
+    pedidoForm.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      if (!pedidoForm.checkValidity()) { pedidoForm.reportValidity(); return; }
+      const send = pedidoForm.querySelector('button[type="submit"]');
+      const error = pedidoForm.querySelector(".pedido-error");
+      send.disabled = true;
+      send.textContent = "Enviando…";
+      error.hidden = true;
+      const fields = new URLSearchParams(new FormData(pedidoForm));
+      fields.set("form-name", "pedido");
+      fields.set("conversacion", history.map((m) => (m.role === "user" ? "Visitante: " : "AiCarlo: ") + m.content).join("\n\n"));
+      let ok = false;
+      try {
+        const res = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: fields.toString() });
+        ok = res.ok;
+      } catch (err) {
+        ok = false;
+      }
+      send.disabled = false;
+      send.textContent = "Enviar pedido";
+      if (ok) {
+        pedidoForm.reset();
+        pedidoForm.hidden = true;
+        pedidoDone.hidden = false;
+        pedidoDone.querySelector("button").focus();
+      } else {
+        error.hidden = false;
+      }
+    });
+  }
+
   /* ---------- conversación ---------- */
 
   function limitReached() {
     if (userTurns < MAX_USER_TURNS) return false;
-    addBot("Hasta aquí llego yo: para seguir hace falta la Carlo de verdad. Escríbele a " + EMAIL + " y te contesta ella.");
+    addPedidoBubble("Hasta aquí llego yo. Si ya sabes lo que quieres, pídelo aquí y Carlo te manda la propuesta con precio cerrado.");
     return true;
   }
 
@@ -253,14 +322,13 @@
 
     let data = null;
     let status = 0;
-    // Si falla por un pico del servidor, se reintenta una vez antes de rendirse.
+    // Si falla o se atasca, se reintenta una vez pidiendo el modelo rápido.
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const started = Date.now();
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: history.slice(-20) }),
+          body: JSON.stringify({ messages: history.slice(-20), rapido: attempt > 0 }),
         });
         status = res.status;
         data = await res.json().catch(() => null);
@@ -269,9 +337,7 @@
         data = null;
       }
       if ((data && data.reply) || (status >= 400 && status < 500)) break;
-      // Si ya ha tardado mucho, otro intento solo alargaría la espera.
-      if (Date.now() - started > 10000) break;
-      if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
     }
 
     typing.remove();
@@ -290,7 +356,7 @@
       if (status === 429) {
         addBot("Vas más rápido que yo. Dame un minuto y vuelve a preguntarme.");
       } else {
-        addBot("Ahora mismo no puedo contestarte en directo. Prueba una de las sugerencias o escríbeme a " + EMAIL + " y te respondo yo.");
+        addPedidoBubble("Se me ha atascado la respuesta. Pregúntamelo otra vez en un momento o, si ya sabes lo que quieres, pídelo aquí.");
       }
     }
     input.focus({ preventScroll: true });
