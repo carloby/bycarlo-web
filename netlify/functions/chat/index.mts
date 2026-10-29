@@ -10,8 +10,12 @@ import { cieloDeHoy } from "./cielo.mts";
 // Se prueban en orden: si el primero está saturado o sin cupo, se pasa al siguiente.
 const MODELS = ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"];
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const TRY_TIMEOUT_MS = 12000; // espera máxima por intento
-const TOTAL_BUDGET_MS = 25000; // tiempo total desde que llega la petición, por debajo del límite de Netlify
+const TRY_TIMEOUT_MS = 9000; // espera máxima por intento
+// Tiempo total desde que llega la petición. Netlify corta a los 26 s contando también el arranque en frío
+// (unos 2 s), así que hay que dejar margen: con 25 s la función moría antes de poder contestar.
+const TOTAL_BUDGET_MS = 19000;
+// Que el modelo piense poco: pensar mucho hacía que cada respuesta tardara más de 12 s.
+const THINKING = { thinkingLevel: "low" };
 const MIN_TRY_MS = 4000; // si queda menos que esto, no se empieza otro intento
 const MAX_MESSAGES = 24; // mensajes de historial que se aceptan
 const MAX_CHARS = 800; // caracteres por mensaje
@@ -110,11 +114,22 @@ async function ask(apiKey: string, payload: unknown, startedAt = Date.now()): Pr
   const intentos: Attempt[] = [];
   const models = modelList();
   const deadline = startedAt + TOTAL_BUDGET_MS;
+  // Se pide pensar poco; si un modelo no admite ese ajuste, se repite sin él.
+  const base = payload as { generationConfig?: Record<string, unknown> };
+  const withThinking = { ...base, generationConfig: { ...base.generationConfig, thinkingConfig: THINKING } };
+  let current: unknown = withThinking;
   // Tras recorrer la lista se da una segunda oportunidad al primero: los fallos suelen ser picos.
   for (const model of [...models, models[0]]) {
     const left = deadline - Date.now();
     if (left < MIN_TRY_MS) break;
-    const attempt = await callModel(apiKey, model, payload, Math.min(TRY_TIMEOUT_MS, left));
+    const t0 = Date.now();
+    let attempt = await callModel(apiKey, model, current, Math.min(TRY_TIMEOUT_MS, left));
+    if (attempt.estado === 400 && /thinking/i.test(attempt.detalle) && current !== payload) {
+      current = payload;
+      const again = deadline - Date.now();
+      if (again >= MIN_TRY_MS) attempt = await callModel(apiKey, model, current, Math.min(TRY_TIMEOUT_MS, again));
+    }
+    console.log(`AiCarlo: ${model} → ${attempt.estado} ${attempt.texto ? "ok" : attempt.detalle.slice(0, 80)} (${Date.now() - t0} ms)`);
     intentos.push(attempt);
     if (attempt.texto) return { texto: attempt.texto, intentos };
     // Una clave mala o una petición mal formada fallarán igual en todos: no se insiste.
